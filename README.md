@@ -22,7 +22,7 @@ Docker Monitoring System — это веб-приложение для мони�
 
 ### 🔹 1. Клонирование репозитория
 ```sh
-git clone https://github.com/your-repository/docker-monitoring.git
+git clone https://github.com/printprince/docker-monitoring.git
 cd docker-monitoring
 ```
 
