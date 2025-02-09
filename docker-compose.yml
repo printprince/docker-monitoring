@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: docker-monitoring-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 61324
+      POSTGRES_DB: docker_monitoring
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "docker_monitoring"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+    command: ["postgres"]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: 61324
+      DB_NAME: docker_monitoring
+      DATABASE_URL: "postgres://postgres:61324@postgres:5432/docker_monitoring?sslmode=disable"
+    restart: always
+
+
+  pinger:
+    build:
+      context: ./pinger
+      dockerfile: Dockerfile
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - backend
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - "./frontend/nginx.conf:/etc/nginx/nginx.conf:ro"
+    restart: always
+
+volumes:
+  postgres_data:
